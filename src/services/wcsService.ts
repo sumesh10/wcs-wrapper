@@ -1,4 +1,5 @@
-import { MemberAttributeResponse } from '#models/memberAttributeValueResponse.js';
+import {  MemberAttributeResponse } from '#models/memberAttributeValueResponse.js';
+import { validateMemberAttributeResponse } from '#schemas/memberAttributeResponseSchema.js';
 import axios from 'axios';
 
 export class MemberService {
@@ -12,13 +13,16 @@ export class MemberService {
     
 
     try {
-      const response = await axios.get<MemberAttributeResponse>(url, {
+      const response = await axios.get<unknown>(url, {
         headers: { 'Content-Type': 'application/json' }
       });
-      return response.data;
-    } catch (error) {
+      return validateMemberAttributeResponse(response.data);
+    } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         throw new Error(`Failed to fetch attribute: ${error.message}`);
+      }
+      if (error instanceof Error) {
+        throw new Error(`Unexpected error: ${error.message}`);
       }
       throw new Error('An unexpected error occurred');
     }

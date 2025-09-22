@@ -1,15 +1,15 @@
 import {  MemberAttributeResponse } from '#models/memberAttributeValueResponse.js';
 import { validateMemberAttributeResponse } from '#schemas/memberAttributeResponseSchema.js';
+import { httpError } from '#types/errors.js';
 import axios from 'axios';
+import { ZodError } from 'zod';
 
 export class MemberService {
 
   public async getMemberAttributeValue(storeId: string, userId: string, attributeName: string): Promise<MemberAttributeResponse> {
     const baseUrl =  process.env.WCS_BASE_URL ?? "http://localhost:8000";
     const url = `${baseUrl}/stores/${storeId}/users/${userId}/attributes/${attributeName}`;
-    console.log(baseUrl);
     
-    console.log(url);
     
 
     try {
@@ -18,13 +18,29 @@ export class MemberService {
       });
       return validateMemberAttributeResponse(response.data);
     } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`Failed to fetch attribute: ${error.message}`);
+       if(axios.isAxiosError(error)) {
+        if(error.response){
+          const statusCode = error.response.status;
+          const upstreamData = error.response.data as unknown;
+
+          const e:httpError = new Error(`WCS service error: ${error.message}`);
+          e.statusCode = statusCode;
+          e.upstream = upstreamData;
+          throw e;
+        }
+        if (error.request) {
+          const e: httpError = new Error("Bad Gateway - no response from WCS");
+          e.statusCode = 502;
+          throw e;
+        }
+        const e: httpError = new Error(error.message);
+        e.statusCode = 500;
+        throw e;
       }
-      if (error instanceof Error) {
-        throw new Error(`Unexpected error: ${error.message}`);
+      if(error instanceof ZodError) {
+        throw error;
       }
-      throw new Error('An unexpected error occurred');
+      throw new Error(`Unexpected error: ${String(error)}`);
     }
   }
 }

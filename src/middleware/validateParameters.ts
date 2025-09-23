@@ -1,12 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 import { ZodError, ZodType  } from "zod";
 
-const validate = <T>(schema: ZodType<T>)=>(req:Request,res:Response, next:NextFunction)=>{
-    try {
-        schema.parse({
-        params: req.params,
-      })
-      
+const validate = <T>(schema: ZodType<T>, type: "body" | "params" | "query" = "body")=>(req:Request,res:Response, next:NextFunction)=>{
+    
+  try {
+      schema.parse(req[type]);
       next();
     } catch (err) {
       if (err instanceof ZodError) {

@@ -8,10 +8,16 @@ import z, { ZodError } from "zod";
 
 
 function isHttpError(e: unknown): e is httpError {
+  console.log("inside check");
+  
   if (typeof e !== "object" || e === null) return false;
+  console.log("object check passed");
+  
   const maybe = e as Record<string, unknown>;
-  if (!("status" in maybe)) return false;
-  const s = maybe.status;
+  if (!("statusCode" in maybe)) return false;
+  console.log("status check passed");
+  
+  const s = maybe.statusCode;
   const isNumber = typeof s === "number" && Number.isFinite(s);
   const isNumericString = typeof s === "string" && /^\d{3}$/.test(s);
   const messageOk = !("message" in maybe) || typeof maybe.message === "string";
@@ -46,6 +52,7 @@ const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunct
     return setResponse(res, statusCode, { data, message, status: "error" });
   }
  
+  console.log(isHttpError(err))
   console.error("Unexpected error:", err);
   return setResponse(res, 500, { data: undefined, message: "Internal Server Error", status: "error" });
 };

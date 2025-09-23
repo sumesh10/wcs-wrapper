@@ -16,10 +16,13 @@ export class MemberService {
       const response = await axios.get<unknown>(url, {
         headers: { 'Content-Type': 'application/json' }
       });
+      console.log(response.data)
       return validateMemberAttributeResponse(response.data);
     } catch (error: unknown) {
        if(axios.isAxiosError(error)) {
         if(error.response){
+          console.log("axios error");
+          
           const statusCode = error.response.status;
           const upstreamData = error.response.data as unknown;
 
@@ -29,6 +32,7 @@ export class MemberService {
           throw e;
         }
         if (error.request) {
+          console.log()
           const e: httpError = new Error("Bad Gateway - no response from WCS");
           e.statusCode = 502;
           throw e;
